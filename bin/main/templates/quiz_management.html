@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>퀴즈 관리</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #007bff;
+        }
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        .sidebar {
+            height: 100vh;
+            background-color: #343a40;
+            padding-top: 20px;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: #adb5bd;
+            padding: 10px 15px;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+            color: white;
+        }
+        .content {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/teacher/dashboard">LCMS 선생님</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 사이드바 -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="/teacher/quizzes">
+                                퀴즈 관리
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/teacher/quiz_results">
+                                퀴즈 결과
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 메인 콘텐츠 영역 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">퀴즈 관리</h1>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuizModal">
+                        새 퀴즈 생성
+                    </button>
+                </div>
+
+                <!-- 메시지 표시 영역 -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <!-- 퀴즈 목록 테이블 -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>제목</th>
+                                <th>설명</th>
+                                <th>생성일</th>
+                                <th>문제 수</th> <!-- 새 컬럼 -->
+                                <th>퀴즈 상태</th>
+                                <th>세션 코드</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="quiz : ${quizzes}">
+                                <td th:text="${quiz.id}"></td>
+                                <td th:text="${quiz.title}"></td>
+                                <td th:text="${quiz.description}"></td>
+                                <td th:text="${#temporals.format(quiz.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${questionCounts.get(quiz.id)} ?: 0"></td> <!-- 문제 개수 표시 -->
+                                <td>
+                                    <span th:if="${quiz.isActive}" class="badge bg-success">활성화</span>
+                                    <span th:unless="${quiz.isActive}" class="badge bg-secondary">비활성화</span>
+                                </td>
+                                <td>
+                                    <span th:if="${activeSessionCodes.containsKey(quiz.id)}" class="badge bg-primary" th:text="${activeSessionCodes.get(quiz.id)}"></span>
+                                    <span th:unless="${activeSessionCodes.containsKey(quiz.id)}" class="text-muted">없음</span>
+                                </td>
+                                <td>
+                                    <!-- 문제 관리 버튼 -->
+                                    <a th:href="@{/teacher/quizzes/{id}/questions(id=${quiz.id})}" class="btn btn-sm btn-secondary me-1">
+                                        문제 관리
+                                    </a>
+
+                                    <!-- 퀴즈 세션 시작/종료 버튼 -->
+                                    <!-- 문제 수가 0개이면 퀴즈 시작 버튼 비활성화 -->
+                                    <form th:if="${!activeSessionCodes.containsKey(quiz.id)}" th:action="@{/teacher/quizzes/{id}/startSession(id=${quiz.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success me-1" th:disabled="${questionCounts.get(quiz.id) == 0}">
+                                            퀴즈 시작
+                                        </button>
+                                    </form>
+                                    <form th:if="${activeSessionCodes.containsKey(quiz.id)}" th:action="@{/teacher/quizzes/{sessionId}/endSession(sessionId=${activeSessionIds.get(quiz.id)})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger me-1" onclick="return confirm('정말로 이 퀴즈 세션을 종료하시겠습니까?');">퀴즈 종료</button>
+                                    </form>
+
+                                    <!-- 수정 버튼 (모달 트리거) -->
+                                    <button type="button" class="btn btn-sm btn-info me-1" data-bs-toggle="modal" data-bs-target="#editQuizModal"
+                                            th:data-quiz-id="${quiz.id}"
+                                            th:data-quiz-title="${quiz.title}"
+                                            th:data-quiz-description="${quiz.description}">
+                                        수정
+                                    </button>
+
+                                    <!-- 퀴즈 활성화/비활성화 토글 버튼 (퀴즈 자체의 활성화) -->
+                                    <form th:action="@{/teacher/quizzes/toggleActive/{id}(id=${quiz.id})}" method="post" class="d-inline">
+                                        <button type="submit" th:classappend="${quiz.isActive} ? 'btn-warning' : 'btn-success'" class="btn btn-sm me-1">
+                                            <span th:if="${quiz.isActive}">비활성화</span>
+                                            <span th:unless="${quiz.isActive}">활성화</span>
+                                        </button>
+                                    </form>
+
+                                    <!-- 삭제 버튼 -->
+                                    <form th:action="@{/teacher/quizzes/delete/{id}(id=${quiz.id})}" method="post" class="d-inline" onsubmit="return confirm('정말로 이 퀴즈를 삭제하시겠습니까?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(quizzes)}">
+                                <td colspan="8" class="text-center">생성된 퀴즈가 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 새 퀴즈 생성 모달 (기존과 동일) -->
+                <div class="modal fade" id="createQuizModal" tabindex="-1" aria-labelledby="createQuizModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createQuizModalLabel">새 퀴즈 생성</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form th:action="@{/teacher/quizzes/create}" method="post">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="createQuizTitle" class="form-label">제목</label>
+                                        <input type="text" class="form-control" id="createQuizTitle" name="title" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="createQuizDescription" class="form-label">설명</label>
+                                        <textarea class="form-control" id="createQuizDescription" name="description" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                                    <button type="submit" class="btn btn-primary">생성</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 퀴즈 수정 모달 (기존과 동일) -->
+                <div class="modal fade" id="editQuizModal" tabindex="-1" aria-labelledby="editQuizModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editQuizModalLabel">퀴즈 수정</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="editQuizForm" method="post">
+                                <div class="modal-body">
+                                    <input type="hidden" id="editQuizId" name="id">
+                                    <div class="mb-3">
+                                        <label for="editQuizTitle" class="form-label">제목</label>
+                                        <input type="text" class="form-control" id="editQuizTitle" name="title" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editQuizDescription" class="form-label">설명</label>
+                                        <textarea class="form-control" id="editQuizDescription" name="description" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                                    <button type="submit" class="btn btn-primary">저장</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS CDN (Popper.js 포함) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        // 퀴즈 수정 모달이 열릴 때 데이터 채우기 (기존과 동일)
+        var editQuizModal = document.getElementById('editQuizModal');
+        editQuizModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget; // 모달을 트리거한 버튼
+            var quizId = button.getAttribute('data-quiz-id');
+            var quizTitle = button.getAttribute('data-quiz-title');
+            var quizDescription = button.getAttribute('data-quiz-description');
+
+            var modalTitle = editQuizModal.querySelector('.modal-title');
+            var modalForm = editQuizModal.querySelector('#editQuizForm');
+            var modalIdInput = editQuizModal.querySelector('#editQuizId');
+            var modalTitleInput = editQuizModal.querySelector('#editQuizTitle');
+            var modalDescriptionInput = editQuizModal.querySelector('#editQuizDescription');
+
+            modalTitle.textContent = '퀴즈 수정 (ID: ' + quizId + ')';
+            modalForm.action = '/teacher/quizzes/update/' + quizId;
+            modalIdInput.value = quizId;
+            modalTitleInput.value = quizTitle;
+            modalDescriptionInput.value = quizDescription;
+        });
+
+        // 퀴즈 시작 후 메시지가 표시될 때 해당 퀴즈 행으로 스크롤
+        document.addEventListener('DOMContentLoaded', function() {
+            const startedQuizId = new URLSearchParams(window.location.search).get('startedQuizId');
+            if (startedQuizId) {
+                const targetRow = document.querySelector(`tr[data-quiz-id="${startedQuizId}"]`);
+                if (targetRow) {
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 메시지 강조를 위해 잠시 배경색 변경
+                    targetRow.style.transition = 'background-color 1s ease-in-out';
+                    targetRow.style.backgroundColor = '#e6ffed'; // 연두색
+                    setTimeout(() => {
+                        targetRow.style.backgroundColor = ''; // 원래대로
+                    }, 3000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

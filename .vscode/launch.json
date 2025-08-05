@@ -1,0 +1,14 @@
+{
+   "configurations": [
+      {
+         "type": "java",
+         "name": "Spring Boot-LcmsApplication<lcms>",
+         "request": "launch",
+         "cwd": "${workspaceFolder}",
+         "mainClass": "com.example.lcms.LcmsApplication",
+         "projectName": "lcms",
+         "args": "",
+         "envFile": "${workspaceFolder}/.env"
+      }
+   ]
+}
