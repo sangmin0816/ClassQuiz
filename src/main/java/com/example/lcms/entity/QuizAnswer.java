@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter @Setter
@@ -21,22 +22,28 @@ public class QuizAnswer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne // 여러 개의 답변이 하나의 퀴즈 응시에 속합니다.
+    @ManyToOne
     @JoinColumn(name = "attempt_id", nullable = false)
-    private QuizAttempt quizAttempt; // 어떤 응시에 대한 답변인지
+    private QuizAttempt quizAttempt; // 이 답변이 속한 퀴즈 응시
 
-    @ManyToOne // 여러 답변이 하나의 문제에 대해 있을 수 있습니다.
+    @ManyToOne
     @JoinColumn(name = "question_id", nullable = false)
-    private Question question; // 어떤 문제에 대한 답변인지
+    private Question question; // 답변한 문제
 
-    private int studentAnswer; // 학생이 선택한 보기 번호 (1, 2, 3, 4)
+    // 학생이 선택한 보기의 내용(String)을 저장하도록 변경
+    private String selectedAnswerContent; 
     private boolean isCorrect; // 정답 여부
 
-    // 생성자
-    public QuizAnswer(QuizAttempt quizAttempt, Question question, int studentAnswer, boolean isCorrect) {
+    private LocalDateTime answerTime; // 답변 제출 시간
+    private Long responseTimeMillis; // 문제에 답변하는 데 걸린 시간 (밀리초)
+
+    // 생성자 (selectedOption 대신 selectedAnswerContent 사용)
+    public QuizAnswer(QuizAttempt quizAttempt, Question question, String selectedAnswerContent, boolean isCorrect, Long responseTimeMillis) {
         this.quizAttempt = quizAttempt;
         this.question = question;
-        this.studentAnswer = studentAnswer;
+        this.selectedAnswerContent = selectedAnswerContent;
         this.isCorrect = isCorrect;
+        this.answerTime = LocalDateTime.now();
+        this.responseTimeMillis = responseTimeMillis;
     }
 }

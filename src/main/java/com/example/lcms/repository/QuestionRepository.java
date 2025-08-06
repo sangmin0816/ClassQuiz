@@ -1,4 +1,3 @@
-// src/main/java/com/example/lcms/repository/QuestionRepository.java 에 추가
 package com.example.lcms.repository;
 
 import com.example.lcms.entity.Question;
@@ -8,7 +7,10 @@ import java.util.List;
 
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByQuiz(Quiz quiz);
-    
-    // 이 메서드를 추가합니다.
-    Long countByQuiz(Quiz quiz); // 특정 퀴즈에 속한 문제의 개수를 세는 메서드
+
+    // 퀴즈와 활성화 여부를 기준으로 문제 목록을 조회하는 메서드 추가
+    List<Question> findByQuizAndIsActiveTrue(Quiz quiz);
+
+    // 특정 퀴즈에 속한 문제의 개수를 세는 메서드 (TeacherController에서 사용)
+    long countByQuiz(Quiz quiz);
 }
