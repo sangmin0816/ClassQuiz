@@ -31,21 +31,12 @@
         .content {
             padding: 20px;
         }
-        .quiz-entry-card {
-            max-width: 400px;
-            margin: 30px auto; /* 중앙 정렬 및 상하 여백 */
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">LCMS 학생</a>
+            <a class="navbar-brand" href="/student/dashboard">LCMS 학생</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -67,11 +58,11 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/student/dashboard">
-                                내 대시보드
+                                대시보드
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="/student/my_quiz_results">
                                 내 퀴즈 결과
                             </a>
                         </li>
@@ -84,7 +75,6 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">학생 대시보드</h1>
                 </div>
-                <p>환영합니다, 학생! 이곳에서 퀴즈에 참여하고 학습 기록을 확인할 수 있습니다.</p>
 
                 <!-- 메시지 표시 영역 -->
                 <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -96,24 +86,27 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
 
-                <!-- 퀴즈 코드 입력 카드 -->
-                <div class="quiz-entry-card">
-                    <h3 class="mb-4">퀴즈 참여 코드 입력</h3>
-                    <form action="/student/quiz_entry" method="post">
-                        <div class="mb-3">
-                            <label for="sessionCode" class="form-label visually-hidden">퀴즈 코드:</label>
-                            <input type="text" class="form-control form-control-lg text-center" id="sessionCode" name="sessionCode" required placeholder="선생님이 알려준 퀴즈 코드 입력">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-lg w-100">퀴즈 시작</button>
-                    </form>
-                </div>
+                <p>환영합니다, 학생! 이곳에서 퀴즈에 참여하고 지난 결과를 확인할 수 있습니다.</p>
 
-                <!-- 여기에 다른 학생 대시보드 내용이 들어갈 예정입니다. -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        퀴즈 참여
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/student/quiz_entry}" method="post">
+                            <div class="mb-3">
+                                <label for="sessionCode" class="form-label">퀴즈 참여 코드 입력:</label>
+                                <input type="text" class="form-control" id="sessionCode" name="sessionCode" placeholder="예: ABCDE1" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">퀴즈 시작</button>
+                        </form>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
 
-    <!-- Bootstrap JS CDN -->
+    <!-- Bootstrap JS CDN (Popper.js 포함) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

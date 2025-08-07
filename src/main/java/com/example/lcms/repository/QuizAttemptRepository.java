@@ -13,10 +13,9 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     List<QuizAttempt> findByQuiz(Quiz quiz);
     // 특정 학생(User)의 모든 퀴즈 응시 기록을 찾는 메서드 (나중에 학생 대시보드에서 유용)
     List<QuizAttempt> findByUser(User user);
-
     // 특정 퀴즈 세션에 대한 모든 응시 기록 조회 (랭킹을 위해 사용될 수 있음)
-    List<QuizAttempt> findByQuizSessionOrderByScoreDescResponseTimeMillisAsc(QuizSession quizSession);
-
+    // 퀴즈 세션에 대한 모든 응시 기록을 점수 내림차순으로 조회합니다.
+    List<QuizAttempt> findByQuizSessionOrderByScoreDesc(QuizSession quizSession);
     // 특정 유저와 특정 퀴즈 세션에 대한 응시 기록이 있는지 확인 (중복 응시 방지 등)
     Optional<QuizAttempt> findByUserAndQuizSession(User user, QuizSession quizSession);
 }

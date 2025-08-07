@@ -58,7 +58,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link" href="/student/dashboard">
-                                내 대시보드
+                                대시보드
                             </a>
                         </li>
                         <li class="nav-item">
@@ -76,17 +76,28 @@
                     <h1 class="h2">내 퀴즈 결과</h1>
                 </div>
 
+                <!-- 메시지 표시 영역 -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>응시 ID</th>
+                                <th>ID</th>
                                 <th>퀴즈 제목</th>
-                                <th>응시일</th>
+                                <th>세션 코드</th>
                                 <th>점수</th>
-                                <th>맞은 개수</th>
+                                <th>맞은 문제 수</th>
                                 <th>총 문제 수</th>
                                 <th>정답률</th>
+                                <th>응시일</th>
                                 <th>액션</th>
                             </tr>
                         </thead>
@@ -94,18 +105,21 @@
                             <tr th:each="attempt : ${myAttempts}">
                                 <td th:text="${attempt.id}"></td>
                                 <td th:text="${attempt.quiz.title}"></td>
-                                <td th:text="${#temporals.format(attempt.startTime, 'yyyy-MM-dd HH:mm')}"></td>
-                                <td th:text="${attempt.score} + '점'"></td>
-                                <td th:text="${attempt.correctAnswers} + '개'"></td>
-                                <td th:text="${attempt.totalQuestions} + '개'"></td>
+                                <td th:text="${attempt.quizSession.sessionCode}"></td>
+                                <td th:text="${attempt.score}"></td>
+                                <td th:text="${attempt.correctAnswers}"></td>
+                                <td th:text="${attempt.totalQuestions}"></td>
                                 <td th:text="${#numbers.formatDecimal(attempt.getAccuracyRate(), 1, 2)} + '%'"></td>
+                                <td th:text="${#temporals.format(attempt.startTime, 'yyyy-MM-dd HH:mm')}"></td>
                                 <td>
-                                    <!-- 상세 보기 링크 (나중에 구현) -->
-                                    <a href="#" class="btn btn-sm btn-info disabled">상세 보기</a>
+                                    <!-- 퀴즈 세션 결과 보기 버튼 (선택 사항, 랭킹 페이지로 연결) -->
+                                    <a th:href="@{/student/quiz_results/{sessionId}(sessionId=${attempt.quizSession.id})}" class="btn btn-sm btn-info">
+                                        세션 랭킹 보기
+                                    </a>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(myAttempts)}">
-                                <td colspan="8" class="text-center">아직 퀴즈 응시 기록이 없습니다.</td>
+                                <td colspan="9" class="text-center">아직 응시한 퀴즈가 없습니다.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -114,7 +128,7 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS CDN -->
+    <!-- Bootstrap JS CDN (Popper.js 포함) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
