@@ -8,9 +8,10 @@ import java.util.List;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByQuiz(Quiz quiz);
 
-    // 퀴즈와 활성화 여부를 기준으로 문제 목록을 조회하는 메서드 추가
     List<Question> findByQuizAndIsActiveTrue(Quiz quiz);
 
-    // 특정 퀴즈에 속한 문제의 개수를 세는 메서드 (TeacherController에서 사용)
-    long countByQuiz(Quiz quiz);
+    // 새롭게 추가된 메서드: 특정 퀴즈에 속한 활성화된 문제의 개수를 세는 메서드
+    long countByQuizAndIsActiveTrue(Quiz quiz); // 이 메서드가 없어서 오류가 발생했습니다.
+
+    long countByQuiz(Quiz quiz); // 기존 메서드 유지
 }

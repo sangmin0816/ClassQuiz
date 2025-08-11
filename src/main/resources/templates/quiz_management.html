@@ -98,19 +98,19 @@
                                 <th>제목</th>
                                 <th>설명</th>
                                 <th>생성일</th>
-                                <th>문제 수</th> <!-- 새 컬럼 -->
+                                <th>문제 수</th>
                                 <th>퀴즈 상태</th>
                                 <th>세션 코드</th>
                                 <th>액션</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="quiz : ${quizzes}">
+                            <tr th:each="quiz : ${quizzes}" th:data-quiz-id="${quiz.id}">
                                 <td th:text="${quiz.id}"></td>
                                 <td th:text="${quiz.title}"></td>
                                 <td th:text="${quiz.description}"></td>
                                 <td th:text="${#temporals.format(quiz.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
-                                <td th:text="${questionCounts.get(quiz.id)} ?: 0"></td> <!-- 문제 개수 표시 -->
+                                <td th:text="${questionCounts.get(quiz.id)} ?: 0"></td>
                                 <td>
                                     <span th:if="${quiz.isActive}" class="badge bg-success">활성화</span>
                                     <span th:unless="${quiz.isActive}" class="badge bg-secondary">비활성화</span>
@@ -126,7 +126,6 @@
                                     </a>
 
                                     <!-- 퀴즈 세션 시작/종료 버튼 -->
-                                    <!-- 문제 수가 0개이면 퀴즈 시작 버튼 비활성화 -->
                                     <form th:if="${!activeSessionCodes.containsKey(quiz.id)}" th:action="@{/teacher/quizzes/{id}/startSession(id=${quiz.id})}" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-success me-1" th:disabled="${questionCounts.get(quiz.id) == 0}">
                                             퀴즈 시작

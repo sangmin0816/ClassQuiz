@@ -53,7 +53,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="/teacher/dashboard">LCMS 선생님</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+                <span class="navbar-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
@@ -95,54 +95,4 @@
                     <div class="card-body">
                         <h5 class="card-title" th:text="${quiz.title} + ' 응시 기록'"></h5>
                         <p class="card-text"><strong>학생:</strong> <span th:text="${quizAttempt.user.username}"></span></p>
-                        <p class="card-text"><strong>점수:</strong> <span th:text="${quizAttempt.score} + '점'"></span></p>
-                        <p class="card-text"><strong>정답률:</strong> <span th:text="${#numbers.formatDecimal(quizAttempt.getAccuracyRate(), 1, 2)} + '%'"></span></p>
-                        <p class="card-text"><strong>응시 시작:</strong> <span th:text="${#temporals.format(quizAttempt.startTime, 'yyyy-MM-dd HH:mm')}"></span></p>
-                        <p class="card-text"><strong>응시 종료:</strong> <span th:text="${quizAttempt.endTime != null ? #temporals.format(quizAttempt.endTime, 'yyyy-MM-dd HH:mm') : '진행 중'}"></span></p>
-                        <a th:href="@{/teacher/quiz_results/{quizId}/attempts(quizId=${quiz.id})}" class="btn btn-sm btn-outline-secondary">
-                            이 퀴즈의 다른 응시 기록으로 돌아가기
-                        </a>
-                    </div>
-                </div>
-
-                <h3 class="mt-4 mb-3">문제별 답변</h3>
-                <div th:if="${#lists.isEmpty(answers)}">
-                    <p class="text-center">이 응시에 대한 답변 기록이 없습니다.</p>
-                </div>
-                <div th:each="answer, stat : ${answers}" class="question-card">
-                    <h5 th:text="${stat.index + 1} + '. ' + ${answer.question.content}"></h5>
-                    <ul>
-                        <li th:classappend="${answer.question.correctAnswer == 1 ? 'correct-answer' : (answer.studentAnswer == 1 ? 'wrong-answer' : '')}">
-                            보기 1: <span th:text="${answer.question.option1}"></span>
-                            <span th:if="${answer.question.correctAnswer == 1}">(정답)</span>
-                            <span th:if="${answer.studentAnswer == 1 && answer.question.correctAnswer != 1}">(학생 선택)</span>
-                        </li>
-                        <li th:classappend="${answer.question.correctAnswer == 2 ? 'correct-answer' : (answer.studentAnswer == 2 ? 'wrong-answer' : '')}">
-                            보기 2: <span th:text="${answer.question.option2}"></span>
-                            <span th:if="${answer.question.correctAnswer == 2}">(정답)</span>
-                            <span th:if="${answer.studentAnswer == 2 && answer.question.correctAnswer != 2}">(학생 선택)</span>
-                        </li>
-                        <li th:classappend="${answer.question.correctAnswer == 3 ? 'correct-answer' : (answer.studentAnswer == 3 ? 'wrong-answer' : '')}">
-                            보기 3: <span th:text="${answer.question.option3}"></span>
-                            <span th:if="${answer.question.correctAnswer == 3}">(정답)</span>
-                            <span th:if="${answer.studentAnswer == 3 && answer.question.correctAnswer != 3}">(학생 선택)</span>
-                        </li>
-                        <li th:classappend="${answer.question.correctAnswer == 4 ? 'correct-answer' : (answer.studentAnswer == 4 ? 'wrong-answer' : '')}">
-                            보기 4: <span th:text="${answer.question.option4}"></span>
-                            <span th:if="${answer.question.correctAnswer == 4}">(정답)</span>
-                            <span th:if="${answer.studentAnswer == 4 && answer.question.correctAnswer != 4}">(학생 선택)</span>
-                        </li>
-                    </ul>
-                    <p>
-                        <strong>학생 답변:</strong> <span th:text="${answer.studentAnswer}"></span>번
-                        (<span th:classappend="${answer.isCorrect ? 'correct-answer' : 'wrong-answer'}" th:text="${answer.isCorrect ? '정답' : '오답'}"></span>)
-                    </p>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-</body>
-</html>
+                        <p class="card-text"><strong>

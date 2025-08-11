@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${quiz.title} + ' 라이브 퀴즈 관리'"></title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #007bff;
+        }
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        .sidebar {
+            height: 100vh;
+            background-color: #343a40;
+            padding-top: 20px;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: #adb5bd;
+            padding: 10px 15px;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+            color: white;
+        }
+        .content {
+            padding: 20px;
+        }
+        .quiz-status-box {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #dc3545; /* Red for timer */
+            margin-top: 15px;
+        }
+        .question-info {
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
+        .button-group {
+            margin-top: 30px;
+        }
+        .button-group .btn {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/teacher/dashboard">LCMS 선생님</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 사이드바 -->
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/teacher/quizzes">
+                                퀴즈 관리
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/teacher/quiz_results">
+                                퀴즈 결과
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 메인 콘텐츠 영역 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" th:text="${quiz.title} + ' 라이브 퀴즈'"></h1>
+                    <a th:href="@{/teacher/quizzes}" class="btn btn-secondary">퀴즈 목록으로</a>
+                </div>
+
+                <div class="quiz-status-box">
+                    <p class="h4">세션 코드: <span th:text="${quizSession.sessionCode}" class="badge bg-info"></span></p>
+                    <p class="h5">현재 퀴즈 상태: <span id="quizStatusText">대기 중...</span></p>
+                    <div id="questionInfo" class="question-info">현재 문제: - / -</div>
+                    <div id="timerDisplay" class="timer-display">--:--</div>
+                </div>
+
+                <div class="button-group text-center">
+                    <button id="startButton" class="btn btn-success btn-lg">퀴즈 시작</button>
+                    <button id="nextQuestionButton" class="btn btn-primary btn-lg" disabled>다음 문제</button>
+                    <button id="endQuizButton" class="btn btn-danger btn-lg" disabled>퀴즈 종료</button>
+                </div>
+
+                <div class="mt-5">
+                    <h3 class="mb-3">실시간 응답 현황 (개발 예정)</h3>
+                    <p class="text-muted">여기에 학생들이 실시간으로 답변하는 현황이 표시될 예정입니다.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- SockJS and STOMP.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <!-- Bootstrap JS CDN (Popper.js 포함) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        const quizSessionId = [[${quizSession.id}]];
+        const sessionCode = [[${quizSession.sessionCode}]];
+
+        let stompClient = null;
+        let timerInterval = null;
+        let currentTimerValue = 0; // 초 단위
+
+        const quizStatusText = document.getElementById('quizStatusText');
+        const questionInfo = document.getElementById('questionInfo');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startButton = document.getElementById('startButton');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const endQuizButton = document.getElementById('endQuizButton');
+
+        function connect() {
+            // 웹소켓 엔드포인트에 연결
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, onConnected, onError);
+        }
+
+        function onConnected() {
+            console.log('Connected to WebSocket. Session ID:', stompClient.ws._stompHeaders['session']);
+
+            // 퀴즈 세션 채널 구독
+            // "/topic/quiz-session/{sessionId}" 경로로 메시지를 받습니다.
+            stompClient.subscribe('/topic/quiz-session/' + quizSessionId, onMessageReceived);
+
+            // UI 활성화
+            startButton.disabled = false;
+            endQuizButton.disabled = false; // 연결되면 종료 버튼 활성화
+        }
+
+        function onError(error) {
+            console.error('Could not connect to WebSocket server. Please refresh this page to try again!', error);
+            quizStatusText.textContent = '연결 실패. 페이지를 새로고침 해주세요.';
+            startButton.disabled = true;
+            nextQuestionButton.disabled = true;
+            endQuizButton.disabled = true;
+        }
+
+        function onMessageReceived(payload) {
+            const message = JSON.parse(payload.body);
+            console.log('Received message:', message);
+
+            if (message.type === 'START' || message.type === 'NEXT_QUESTION') {
+                quizStatusText.textContent = '퀴즈 진행 중';
+                questionInfo.textContent = `현재 문제: ${message.currentQuestionNumber} / ${message.totalQuestions}`;
+                currentTimerValue = message.timeLimitSeconds;
+                startTimer(message.timeLimitSeconds); // 문제당 시간 제한으로 타이머 시작
+                nextQuestionButton.disabled = false; // 다음 문제 버튼 활성화
+            } else if (message.type === 'ENDED') {
+                quizStatusText.textContent = '퀴즈 종료됨';
+                questionInfo.textContent = '모든 문제가 완료되었습니다.';
+                stopTimer();
+                timerDisplay.textContent = '00:00';
+                startButton.disabled = true;
+                nextQuestionButton.disabled = true;
+                endQuizButton.disabled = true;
+                alert(message.message || '퀴즈가 종료되었습니다!'); // 퀴즈 종료 메시지 알림
+            } else if (message.status === 'IN_PROGRESS') {
+                // 타이머 업데이트 메시지
+                currentTimerValue = message.timeLeftSeconds;
+                updateTimerDisplay();
+            }
+        }
+
+        // 타이머 시작 함수
+        function startTimer(durationSeconds) {
+            stopTimer(); // 기존 타이머 중지
+            currentTimerValue = durationSeconds;
+            updateTimerDisplay(); // 즉시 업데이트
+
+            timerInterval = setInterval(() => {
+                currentTimerValue--;
+                updateTimerDisplay();
+                if (currentTimerValue <= 0) {
+                    stopTimer();
+                    // 타이머가 0이 되면 자동으로 다음 문제로 넘어가도록 WebSocketController에서 처리
+                }
+            }, 1000);
+        }
+
+        // 타이머 중지 함수
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // 타이머 디스플레이 업데이트
+        function updateTimerDisplay() {
+            const minutes = Math.floor(currentTimerValue / 60);
+            const seconds = currentTimerValue % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // 퀴즈 시작 버튼 클릭
+        startButton.addEventListener('click', () => {
+            if (stompClient && stompClient.connected) {
+                // "/app/quiz.start/{sessionId}" 경로로 메시지 전송
+                stompClient.send(`/app/quiz.start/${quizSessionId}`, {}, JSON.stringify({ message: "퀴즈 시작" }));
+                startButton.disabled = true; // 시작 버튼 비활성화
+            } else {
+                alert('웹소켓 연결이 되어있지 않습니다. 페이지를 새로고침 해주세요.');
+            }
+        });
+
+        // 다음 문제 버튼 클릭
+        nextQuestionButton.addEventListener('click', () => {
+            if (stompClient && stompClient.connected) {
+                // "/app/quiz.nextQuestion/{sessionId}" 경로로 메시지 전송
+                stompClient.send(`/app/quiz.nextQuestion/${quizSessionId}`, {}, JSON.stringify({ message: "다음 문제" }));
+                nextQuestionButton.disabled = true; // 다음 문제 버튼 잠시 비활성화 (서버 응답 후 재활성화)
+            } else {
+                alert('웹소켓 연결이 되어있지 않습니다. 페이지를 새로고침 해주세요.');
+            }
+        });
+
+        // 퀴즈 종료 버튼 클릭
+        endQuizButton.addEventListener('click', () => {
+            if (confirm('정말로 이 퀴즈 세션을 강제 종료하시겠습니까?')) {
+                if (stompClient && stompClient.connected) {
+                    // "/app/quiz.end/{sessionId}" 경로로 메시지 전송 (추가 예정)
+                    // 현재는 TeacherController의 HTTP POST 요청으로 종료 처리
+                    fetch(`/teacher/quizzes/${quizSessionId}/endSession`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            // CSRF 토큰 필요 시 추가 (Thymeleaf 기본적으로 포함)
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            console.log('HTTP 퀴즈 종료 요청 성공');
+                            // 서버에서 웹소켓 종료 메시지를 보낼 것이므로 여기서는 추가 작업 불필요
+                        } else {
+                            console.error('HTTP 퀴즈 종료 요청 실패');
+                            alert('퀴즈 종료 실패: ' + response.statusText);
+                        }
+                    }).catch(error => {
+                        console.error('Error ending quiz via HTTP:', error);
+                        alert('네트워크 오류로 퀴즈 종료 실패');
+                    });
+                } else {
+                    alert('웹소켓 연결이 되어있지 않습니다. 페이지를 새로고침 해주세요.');
+                }
+            }
+        });
+
+        // 페이지 로드 시 웹소켓 연결 시도
+        document.addEventListener('DOMContentLoaded', connect);
+
+        // 페이지를 떠날 때 웹소켓 연결 해제 (선택 사항)
+        window.onbeforeunload = function() {
+            if (stompClient) {
+                stompClient.disconnect();
+                console.log("Disconnected from WebSocket.");
+            }
+        };
+    </script>
+</body>
+</html>
